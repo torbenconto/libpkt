@@ -1,0 +1,37 @@
+#ifndef PKT_LIBRARY_H
+#define PKT_LIBRARY_H
+
+#include <stdint.h>
+#include <stdio.h>
+
+// big-endian
+#define PKT_MAGIC_NUMBER 0x504B5400
+
+typedef enum {
+    PKT_TYPE_ARP = 0x01
+} pkt_type_t;
+
+typedef struct {
+    uint32_t magic_number;
+    uint8_t version;
+    uint8_t endian;
+    uint16_t reserved;
+    uint32_t length;
+} pkt_header_t;
+
+typedef struct {
+    uint16_t type;
+    int64_t timestamp;
+    uint32_t length;
+    uint8_t data[];
+} pkt_t;
+
+typedef struct {
+    FILE *fp;
+} pkt_file_t;
+
+pkt_file_t *pkt_open(const char *filename, const char *mode);
+void pkt_close(pkt_file_t *file);
+int pkt_write_header(pkt_file_t *file, pkt_header_t *header);
+
+#endif //PKT_LIBRARY_H
