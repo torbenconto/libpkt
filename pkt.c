@@ -47,8 +47,8 @@ void pkt_header_destroy(pkt_header_t *header) {
 }
 
 
-pkt_t *pkt_create() {
-    pkt_t *packet = (pkt_t *)malloc(sizeof(pkt_t));
+pkt_t *pkt_create(uint32_t length) {
+    pkt_t *packet = (pkt_t *)malloc(sizeof(pkt_t) + length);
     if (packet == NULL) {
         return NULL;
     }
@@ -56,7 +56,7 @@ pkt_t *pkt_create() {
     // Initialize the packet fields
     packet->type = 0;
     packet->timestamp = 0;
-    packet->length = 0;
+    packet->length = length;
 
     return packet;
 }
@@ -211,3 +211,54 @@ int pkt_append_packet(pkt_file_t *file, pkt_t *packet) {
 
     return 0;
 }
+
+pkt_t *pkt_read_packet(pkt_file_t *file) {
+    if (!file || !file->fp) {
+        return NULL;
+    }
+
+    // Read header from the file
+    pkt_header_t *header = pkt_read_header(file);
+    if (!header) {
+        return NULL;
+    }
+
+    // Read the fixed-size part of the packet (excluding the flexible array)
+    pkt_t packet;
+    if (fread(&packet, 1, sizeof(pkt_t), file->fp) != sizeof(pkt_t)) {
+        fprintf(stderr, "Error reading fixed part of packet\n");
+        free(header);
+        return NULL;
+    }
+
+    // Allocate memory for the flexible array (data[]) based on the packet length
+    pkt_t *packet_ptr = pkt_create(packet.length);  // pkt_create now takes length as an argument
+    if (!packet_ptr) {
+        fprintf(stderr, "Error allocating memory for packet\n");
+        free(header);
+        return NULL;
+    }
+
+    // Copy over the fixed part of the packet to the newly allocated packet
+    *packet_ptr = packet;
+
+    // If the file is in little-endian format, convert the packet fields
+    if (header->endian == 1) {
+        packet_ptr->type = swap16(packet_ptr->type);
+        packet_ptr->timestamp = swap_int64(packet_ptr->timestamp);
+        packet_ptr->length = swap32(packet_ptr->length);
+    }
+
+    // Read the actual data into the flexible array (data[])
+    size_t bytes_read = fread(packet_ptr->data, 1, packet_ptr->length, file->fp);
+    if (bytes_read != packet_ptr->length) {
+        fprintf(stderr, "Error reading packet data: expected %u bytes, but got %zu\n", packet_ptr->length, bytes_read);
+        free(header);
+        free(packet_ptr);
+        return NULL;
+    }
+
+    free(header);
+    return packet_ptr;
+}
+

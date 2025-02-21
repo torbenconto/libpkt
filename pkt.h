@@ -36,12 +36,13 @@ typedef struct {
 
 pkt_header_t *pkt_header_create();
 void pkt_header_destroy(pkt_header_t *header);
-pkt_t *pkt_create();
+pkt_t *pkt_create(uint32_t length); 
 void pkt_destroy(pkt_t *packet);
 pkt_file_t *pkt_open(const char *filename, const char *mode);
 void pkt_close(pkt_file_t *file);
 int pkt_write_header(pkt_file_t *file, pkt_header_t *header);
 pkt_header_t *pkt_read_header(pkt_file_t *file);
 int pkt_append_packet(pkt_file_t *file, pkt_t *packet);
+pkt_t *pkt_read_packet(pkt_file_t *file);
 
 #endif //PKT_LIBRARY_H
