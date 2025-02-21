@@ -70,7 +70,12 @@ pkt_file_t *pkt_open(const char *filename) {
     if (!pkt) {
         return NULL;
     }
-    pkt->fp = fopen(filename, "w+b");
+    FILE *file = fopen(filename, "r+b");
+    if (file == NULL) {
+        file = fopen(filename, "w+b");
+    }
+
+    pkt->fp = file;
     if (!pkt->fp) {
         free(pkt);
         return NULL;
@@ -147,6 +152,8 @@ pkt_header_t *pkt_read_header(pkt_file_t *file) {
         header->magic_number = swap32(header->magic_number);
         header->length = swap32(header->length);
     }
+
+    fseek(file->fp, 0, SEEK_SET);
 
     return header;
 }
@@ -260,6 +267,8 @@ pkt_t *pkt_read_packet(pkt_file_t *file) {
         free(packet_ptr);
         return NULL;
     }
+
+    fseek(file->fp, 0, SEEK_SET);
 
     free(header);
     return packet_ptr;
