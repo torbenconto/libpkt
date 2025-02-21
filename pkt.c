@@ -87,3 +87,34 @@ int pkt_write_header(pkt_file_t *file, pkt_header_t *header) {
 
     return 0;
 }
+
+pkt_header_t *pkt_read_header(pkt_file_t *file) {
+    if (!file || !file->fp) {
+        return NULL;
+    }
+
+    pkt_header_t *header = pkt_header_create();
+    if (!header) {
+        return NULL;
+    }
+
+    if (fread(header, 1, sizeof(pkt_header_t), file->fp) != sizeof(pkt_header_t)) {
+        fprintf(stderr, "Failed to read header\n");
+        free(header);
+        return NULL;
+    }
+
+    // Magic number is big-endian
+    if (swap32(header->magic_number) != PKT_MAGIC_NUMBER) {
+        fprintf(stderr, "Invalid magic number\n");
+        free(header);
+        return NULL;
+    }
+
+    if (header->endian == 1) {
+        header->magic_number = swap32(header->magic_number);
+        header->length = swap32(header->length);
+    }
+
+    return header;
+}

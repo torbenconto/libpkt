@@ -1,0 +1,8 @@
+*.cmake
+test
+*.sh
+CMakeCache.txt
+CMakeFiles
+*.a
+*.pkt
+Makefile
