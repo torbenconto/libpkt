@@ -1,4 +1,4 @@
-#include "pkt.h"
+#include "libpkt.h"
 
 #include <stdlib.h>
 #include <string.h>
