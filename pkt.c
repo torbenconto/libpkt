@@ -14,6 +14,26 @@ uint32_t swap32(const uint32_t val) {
            ((val << 24) & 0xFF000000);
 }
 
+pkt_header_t *pkt_header_create() {
+    pkt_header_t *header = (pkt_header_t *)malloc(sizeof(pkt_header_t));
+    if (header == NULL) {
+        return NULL;
+    }
+
+    // Initialize the header fields
+    header->magic_number = PKT_MAGIC_NUMBER;
+    header->version = 1;
+    header->endian = 1;
+    header->reserved = 0;
+    header->length = 0;
+
+    return header;
+}
+
+
+void pkt_header_destroy(pkt_header_t *header) {
+    free(header);
+}
 
 pkt_file_t *pkt_open(const char *filename, const char *mode) {
     pkt_file_t *pkt = malloc(sizeof(pkt_file_t));
