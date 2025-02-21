@@ -14,6 +14,17 @@ uint32_t swap32(const uint32_t val) {
            ((val << 24) & 0xFF000000);
 }
 
+uint64_t swap_int64(uint64_t val) {
+    return ((val >> 56) & 0xFF) |
+           ((val >> 40) & 0xFF00) |
+           ((val >> 24) & 0xFF0000) |
+           ((val >> 8)  & 0xFF000000) |
+           ((val << 8)  & 0xFF00000000) |
+           ((val << 24) & 0xFF0000000000) |
+           ((val << 40) & 0xFF000000000000) |
+           ((val << 56) & 0xFF00000000000000);
+}
+
 pkt_header_t *pkt_header_create() {
     pkt_header_t *header = (pkt_header_t *)malloc(sizeof(pkt_header_t));
     if (header == NULL) {
@@ -35,12 +46,30 @@ void pkt_header_destroy(pkt_header_t *header) {
     free(header);
 }
 
+
+pkt_t *pkt_create() {
+    pkt_t *packet = (pkt_t *)malloc(sizeof(pkt_t));
+    if (packet == NULL) {
+        return NULL;
+    }
+
+    // Initialize the packet fields
+    packet->type = 0;
+    packet->timestamp = 0;
+    packet->length = 0;
+
+    return packet;
+}
+
+void pkt_destroy(pkt_t *packet) {
+    free(packet);
+}
+
 pkt_file_t *pkt_open(const char *filename, const char *mode) {
     pkt_file_t *pkt = malloc(sizeof(pkt_file_t));
     if (!pkt) {
         return NULL;
     }
-
     pkt->fp = fopen(filename, mode);
     if (!pkt->fp) {
         free(pkt);
@@ -72,7 +101,6 @@ int pkt_write_header(pkt_file_t *file, pkt_header_t *header) {
 
     if (header->endian == 1) {
         converted_header.magic_number = swap32(header->magic_number);
-        converted_header.version = swap32(header->version);
         converted_header.length = swap32(header->length);
     }
 
@@ -117,4 +145,69 @@ pkt_header_t *pkt_read_header(pkt_file_t *file) {
     }
 
     return header;
+}
+
+int pkt_append_packet(pkt_file_t *file, pkt_t *packet) {
+    if (!file || !file->fp || !packet) {
+        fprintf(stderr, "Invalid arguments\n");
+        return -1;
+    }
+
+    // Read the existing header from the file
+    pkt_header_t *header = pkt_read_header(file);
+    if (!header) {
+        fprintf(stderr, "Cant read header\n");
+        return -1;
+    }
+
+    // Calculate the new packet length
+    uint32_t new_length = header->length + 1;
+
+    // Update the length in the header
+    header->length = new_length;
+
+    // Allocate buffer to write the packet
+    unsigned char *buf = (unsigned char *)malloc(sizeof(pkt_t) + packet->length);
+    if (!buf) {
+        fprintf(stderr, "Failed to allocate buffer\n");
+        free(header);
+        return -1;
+    }
+
+    // Convert packet to the correct endian format if needed
+    pkt_t converted_packet = *packet;
+    if (header->endian == 1) {
+        converted_packet.type = swap16(packet->type);
+        converted_packet.timestamp = swap_int64(packet->timestamp);
+        converted_packet.length = swap32(packet->length);
+    }
+
+    // Copy the packet data into the buffer
+    memcpy(buf, &converted_packet, sizeof(pkt_t));
+    memcpy(buf + sizeof(pkt_t), packet->data, packet->length);
+
+    // Move file pointer back to the start of the file to overwrite the header
+    fseek(file->fp, 0, SEEK_SET);
+
+    // Write the updated header to the file
+    if (pkt_write_header(file, header) != 0) {
+        free(buf);
+        free(header);
+        return -1;
+    }
+
+    // Move the file pointer back to the end where the packet will be written
+    fseek(file->fp, 0, SEEK_END);
+
+    // Then write the packet data to the file
+    if (fwrite(buf, 1, sizeof(pkt_t) + packet->length, file->fp) != sizeof(pkt_t) + packet->length) {
+        free(buf);
+        free(header);
+        return -1;
+    }
+
+    free(buf);
+    free(header);
+
+    return 0;
 }
