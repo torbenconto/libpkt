@@ -97,6 +97,10 @@ int pkt_write_header(pkt_file_t *file, pkt_header_t *header) {
     if (!file || !header || !file->fp) {
         return -1;
     }
+
+    // Seek to the start of the file
+    fseek(file->fp, 0, SEEK_SET);
+
     unsigned char *buf = (unsigned char *)malloc(sizeof(pkt_header_t));
     if (!buf) {
         return -1;
@@ -167,17 +171,24 @@ int pkt_append_packet(pkt_file_t *file, pkt_t *packet) {
     // Read the existing header from the file
     pkt_header_t *header = pkt_read_header(file);
     if (!header) {
-        fprintf(stderr, "Cant read header\n");
+        fprintf(stderr, "Can't read header\n");
         return -1;
     }
 
-    // Calculate the new packet length
-    uint32_t new_length = header->length + 1;
+    // Update the length (packet count)
+    header->length += 1;
 
-    // Update the length in the header
-    header->length = new_length;
+    // Move file pointer back to the start to update the header
+    fseek(file->fp, 0, SEEK_SET);
+    if (pkt_write_header(file, header) != 0) {
+        free(header);
+        return -1;
+    }
 
-    // Allocate buffer to write the packet
+    // Move file pointer to the end for appending packet
+    fseek(file->fp, 0, SEEK_END);
+
+    // Allocate buffer for packet
     unsigned char *buf = (unsigned char *)malloc(sizeof(pkt_t) + packet->length);
     if (!buf) {
         fprintf(stderr, "Failed to allocate buffer\n");
@@ -185,7 +196,7 @@ int pkt_append_packet(pkt_file_t *file, pkt_t *packet) {
         return -1;
     }
 
-    // Convert packet to the correct endian format if needed
+    // Convert packet to correct endian format if needed
     pkt_t converted_packet = *packet;
     if (header->endian == 1) {
         converted_packet.type = swap16(packet->type);
@@ -193,35 +204,19 @@ int pkt_append_packet(pkt_file_t *file, pkt_t *packet) {
         converted_packet.length = swap32(packet->length);
     }
 
-
     // Copy the packet data into the buffer
     memcpy(buf, &converted_packet, sizeof(pkt_t));
     memcpy(buf + sizeof(pkt_t), packet->data, packet->length);
 
-    // Move file pointer back to the start of the file to overwrite the header
-    fseek(file->fp, 0, SEEK_SET);
-
-    // Write the updated header to the file
-    if (pkt_write_header(file, header) != 0) {
-        free(buf);
-        free(header);
-        return -1;
-    }
-
-    // Move the file pointer back to the end where the packet will be written
-    fseek(file->fp, 0, SEEK_END);
-
-    // Then write the packet data to the file
+    // Write the packet at the end of the file
     if (fwrite(buf, 1, sizeof(pkt_t) + packet->length, file->fp) != sizeof(pkt_t) + packet->length) {
+        fprintf(stderr, "Error writing packet\n");
         free(buf);
         free(header);
         return -1;
     }
-
 
     fflush(file->fp);
-    fseek(file->fp, 0, SEEK_SET);
-
     free(buf);
     free(header);
 
@@ -237,6 +232,9 @@ pkt_t *pkt_read_packet(pkt_file_t *file) {
     if (!header) {
         return NULL;
     }
+
+    // Move the file pointer to the start of the first packet
+    fseek(file->fp, sizeof(pkt_header_t), SEEK_SET);
 
     pkt_t packet;
     if (fread(&packet, 1, sizeof(pkt_t), file->fp) != sizeof(pkt_t)) {
