@@ -3,60 +3,30 @@
 #include <stdlib.h>
 #include <string.h>
 
-uint16_t swap16(const uint16_t val) {
-    return (val >> 8) | (val << 8);
-}
-
-uint32_t swap32(const uint32_t val) {
-    return ((val >> 24) & 0x000000FF) |
-           ((val >> 8)  & 0x0000FF00) |
-           ((val << 8)  & 0x00FF0000) |
-           ((val << 24) & 0xFF000000);
-}
-
-uint64_t swap_int64(uint64_t val) {
-    return ((val >> 56) & 0xFF) |
-           ((val >> 40) & 0xFF00) |
-           ((val >> 24) & 0xFF0000) |
-           ((val >> 8)  & 0xFF000000) |
-           ((val << 8)  & 0xFF00000000) |
-           ((val << 24) & 0xFF0000000000) |
-           ((val << 40) & 0xFF000000000000) |
-           ((val << 56) & 0xFF00000000000000);
-}
-
 pkt_header_t *pkt_header_create() {
     pkt_header_t *header = (pkt_header_t *)malloc(sizeof(pkt_header_t));
-    if (header == NULL) {
-        return NULL;
-    }
+    if (!header) return NULL;
 
-    // Initialize the header fields
     header->magic_number = PKT_MAGIC_NUMBER;
     header->version = 1;
-    header->endian = 1;
+    header->endian = 0;
     header->reserved = 0;
     header->length = 0;
 
     return header;
 }
 
-
 void pkt_header_destroy(pkt_header_t *header) {
     free(header);
 }
 
-
 pkt_t *pkt_create(uint32_t length) {
     pkt_t *packet = (pkt_t *)malloc(sizeof(pkt_t) + (length > 0 ? length : 0));
-    if (packet == NULL) {
-        return NULL;
-    }
+    if (!packet) return NULL;
 
-    // Initialize the packet fields
     packet->type = 0;
     packet->timestamp = 0;
-    packet->length = length;    
+    packet->length = length;
 
     return packet;
 }
@@ -67,13 +37,10 @@ void pkt_destroy(pkt_t *packet) {
 
 pkt_file_t *pkt_open(const char *filename) {
     pkt_file_t *pkt = malloc(sizeof(pkt_file_t));
-    if (!pkt) {
-        return NULL;
-    }
+    if (!pkt) return NULL;
+
     FILE *file = fopen(filename, "r+b");
-    if (file == NULL) {
-        file = fopen(filename, "w+b");
-    }
+    if (!file) file = fopen(filename, "w+b");
 
     pkt->fp = file;
     if (!pkt->fp) {
@@ -86,189 +53,205 @@ pkt_file_t *pkt_open(const char *filename) {
 
 void pkt_close(pkt_file_t *file) {
     if (file) {
-        if (file->fp) {
-            fclose(file->fp);
-        }
+        if (file->fp) fclose(file->fp);
         free(file);
     }
 }
 
 int pkt_write_header(pkt_file_t *file, pkt_header_t *header) {
-    if (!file || !header || !file->fp) {
-        return -1;
-    }
+    if (!file || !header || !file->fp) return -1;
 
-    // Seek to the start of the file
     fseek(file->fp, 0, SEEK_SET);
 
-    unsigned char *buf = (unsigned char *)malloc(sizeof(pkt_header_t));
-    if (!buf) {
-        return -1;
-    }
-
-    pkt_header_t converted_header = *header;
-
-    if (header->endian == 1) {
-        converted_header.magic_number = swap32(header->magic_number);
-        converted_header.length = swap32(header->length);
-    }
-
-    memcpy(buf, &converted_header, sizeof(pkt_header_t));
-
-    if (fwrite(buf, 1, sizeof(pkt_header_t), file->fp) != sizeof(pkt_header_t)) {
-        free(buf);
+    if (fwrite(header, sizeof(pkt_header_t), 1, file->fp) != 1) {
         return -1;
     }
 
     fflush(file->fp);
-
-    fseek(file->fp, 0, SEEK_SET);
-
-    free(buf);
-
     return 0;
 }
 
 pkt_header_t *pkt_read_header(pkt_file_t *file) {
-    if (!file || !file->fp) {
-        return NULL;
-    }
+    if (!file || !file->fp) return NULL;
 
     pkt_header_t *header = pkt_header_create();
-    if (!header) {
-        return NULL;
-    }
+    if (!header) return NULL;
 
-    if (fread(header, 1, sizeof(pkt_header_t), file->fp) != sizeof(pkt_header_t)) {
-        fprintf(stderr, "Failed to read header\n");
+    if (fread(header, sizeof(pkt_header_t), 1, file->fp) != 1) {
         free(header);
         return NULL;
     }
 
-    // Magic number is big-endian
-    if (swap32(header->magic_number) != PKT_MAGIC_NUMBER) {
-        fprintf(stderr, "Invalid magic number\n");
+    if (header->magic_number != PKT_MAGIC_NUMBER) {
         free(header);
         return NULL;
     }
-
-    if (header->endian == 1) {
-        header->magic_number = swap32(header->magic_number);
-        header->length = swap32(header->length);
-    }
-
-    fseek(file->fp, 0, SEEK_SET);
 
     return header;
 }
 
 int pkt_append_packet(pkt_file_t *file, pkt_t *packet) {
-    if (!file || !file->fp || !packet) {
-        fprintf(stderr, "Invalid arguments\n");
-        return -1;
-    }
+    if (!file || !file->fp || !packet) return -1;
 
-    // Read the existing header from the file
+
     pkt_header_t *header = pkt_read_header(file);
     if (!header) {
         fprintf(stderr, "Can't read header\n");
         return -1;
     }
 
-    // Update the length (packet count)
-    header->length += 1;
+    header->length++;
 
-    // Move file pointer back to the start to update the header
     fseek(file->fp, 0, SEEK_SET);
-    if (pkt_write_header(file, header) != 0) {
+
+    if (pkt_write_header(file,header) != 0) {
+        fprintf(stderr, "Can't write header\n");
         free(header);
         return -1;
-    }
+    }   
 
-    // Move file pointer to the end for appending packet
     fseek(file->fp, 0, SEEK_END);
 
-    // Allocate buffer for packet
-    unsigned char *buf = (unsigned char *)malloc(sizeof(pkt_t) + packet->length);
-    if (!buf) {
-        fprintf(stderr, "Failed to allocate buffer\n");
-        free(header);
+    if (fwrite(packet, sizeof(pkt_t), 1, file->fp) != 1) {
         return -1;
     }
 
-    // Convert packet to correct endian format if needed
-    pkt_t converted_packet = *packet;
-    if (header->endian == 1) {
-        converted_packet.type = swap16(packet->type);
-        converted_packet.timestamp = swap_int64(packet->timestamp);
-        converted_packet.length = swap32(packet->length);
-    }
-
-    // Copy the packet data into the buffer
-    memcpy(buf, &converted_packet, sizeof(pkt_t));
-    memcpy(buf + sizeof(pkt_t), packet->data, packet->length);
-
-    // Write the packet at the end of the file
-    if (fwrite(buf, 1, sizeof(pkt_t) + packet->length, file->fp) != sizeof(pkt_t) + packet->length) {
-        fprintf(stderr, "Error writing packet\n");
-        free(buf);
-        free(header);
-        return -1;
+    if (packet->length > 0) {
+        if (fwrite(packet->data, 1, packet->length, file->fp) != packet->length) {
+            return -1;
+        }
     }
 
     fflush(file->fp);
-    free(buf);
     free(header);
-
     return 0;
 }
 
 pkt_t *pkt_read_packet(pkt_file_t *file) {
-    if (!file || !file->fp) {
-        return NULL;
-    }
+    if (!file || !file->fp) return NULL;
 
-    pkt_header_t *header = pkt_read_header(file);
-    if (!header) {
-        return NULL;
-    }
-
-    // Move the file pointer to the start of the first packet
+    // skip header
     fseek(file->fp, sizeof(pkt_header_t), SEEK_SET);
 
     pkt_t packet;
-    if (fread(&packet, 1, sizeof(pkt_t), file->fp) != sizeof(pkt_t)) {
-        fprintf(stderr, "Error reading fixed part of packet\n");
-        free(header);
-        return NULL;
-    }
+    if (fread(&packet, sizeof(pkt_t), 1, file->fp) != 1) return NULL;
 
     pkt_t *packet_ptr = pkt_create(packet.length);
-    if (!packet_ptr) {
-        fprintf(stderr, "Error allocating memory for packet\n");
-        free(header);
-        return NULL;
-    }
+    if (!packet_ptr) return NULL;
 
     *packet_ptr = packet;
 
-    if (header->endian == 1) {
-        packet_ptr->type = swap16(packet_ptr->type);
-        packet_ptr->timestamp = swap_int64(packet_ptr->timestamp);
-        packet_ptr->length = swap32(packet_ptr->length);
+    if (packet_ptr->length > 0) {
+        if (fread(packet_ptr->data, 1, packet_ptr->length, file->fp) != packet_ptr->length) {
+            free(packet_ptr);
+            return NULL;
+        }
     }
 
-    size_t bytes_read = fread(packet_ptr->data, 1, packet_ptr->length, file->fp);
-    if (bytes_read != packet_ptr->length) {
-        fprintf(stderr, "Error reading packet data: expected %u bytes, but got %zu\n", packet_ptr->length, bytes_read);
-        free(header);
-        free(packet_ptr);
-        return NULL;
-    }
-
-    fseek(file->fp, 0, SEEK_SET);
-
-    free(header);
     return packet_ptr;
 }
 
+pkt_t *pkt_read_packet_at(pkt_file_t *file, size_t index) {
+    if (!file || !file->fp) return NULL;
+
+    pkt_header_t *header = pkt_read_header(file);
+    if (!header) return NULL;
+    
+    if (index >= header->length) {
+        return NULL;
+    }
+
+    long offset = sizeof(pkt_header_t);
+
+    for (size_t i = 0; i < index; i++) {
+        pkt_t packet;
+        if (fread(&packet, sizeof(pkt_t), 1, file->fp) != 1) {
+            return NULL;
+        }
+        offset += sizeof(pkt_t) + packet.length;
+    }
+
+    if (fseek(file->fp, offset, SEEK_SET) != 0) {
+        return NULL;
+    }
+    
+    pkt_t packet;
+    if (fread(&packet, sizeof(pkt_t), 1, file->fp) != 1) return NULL;
+
+    pkt_t *packet_ptr = pkt_create(packet.length);
+    if (!packet_ptr) return NULL;
+
+    *packet_ptr = packet;
+
+    if (packet_ptr->length > 0) {
+        if (fread(packet_ptr->data, 1, packet_ptr->length, file->fp) != packet_ptr->length) {
+            free(packet_ptr);
+            return NULL;
+        }
+    }
+
+    return packet_ptr;
+}
+
+
+
+pkt_array_t pkt_read_all_packets(pkt_file_t *file) {
+    pkt_array_t result = {NULL, 0};
+
+    if (!file || !file->fp) return result;
+
+    pkt_header_t *header = pkt_read_header(file);
+    if (!header) return result;
+
+    if (header->length == 0) {
+        return result;
+    }
+
+    fseek(file->fp, sizeof(pkt_header_t), SEEK_SET);
+
+    result.packets = malloc(header->length * sizeof(pkt_t *));
+    if (!result.packets) return result;
+
+    result.length = header->length;
+
+    for (size_t i = 0; i < result.length; i++) {
+        pkt_t packet;
+
+        if (fread(&packet, sizeof(pkt_t), 1, file->fp) != 1) {
+            for (size_t j = 0; j < i; j++) {
+                free(result.packets[j]);
+            }
+            free(result.packets);
+            result.packets = NULL;
+            return result;
+        }
+
+        pkt_t *packet_ptr = pkt_create(packet.length);
+        if (!packet_ptr) {
+            for (size_t j = 0; j < i; j++) {
+                free(result.packets[j]);
+            }
+            free(result.packets);
+            result.packets = NULL;
+            return result;
+        }
+
+        *packet_ptr = packet;
+
+        if (packet_ptr->length > 0) {
+            if (fread(packet_ptr->data, 1, packet_ptr->length, file->fp) != packet_ptr->length) {
+                free(packet_ptr);
+                for (size_t j = 0; j < i; j++) {
+                    free(result.packets[j]);
+                }
+                free(result.packets);
+                result.packets = NULL;
+                return result;
+            }
+        }
+
+        result.packets[i] = packet_ptr;
+    }
+
+    return result;
+}

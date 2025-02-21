@@ -31,6 +31,11 @@ typedef struct {
     FILE *fp;
 } pkt_file_t;
 
+typedef struct {
+    pkt_t **packets;
+    size_t length;
+} pkt_array_t;
+
 pkt_header_t *pkt_header_create();
 void pkt_header_destroy(pkt_header_t *header);
 pkt_t *pkt_create(uint32_t length); 
@@ -41,5 +46,7 @@ int pkt_write_header(pkt_file_t *file, pkt_header_t *header);
 pkt_header_t *pkt_read_header(pkt_file_t *file);
 int pkt_append_packet(pkt_file_t *file, pkt_t *packet);
 pkt_t *pkt_read_packet(pkt_file_t *file);
+pkt_t *pkt_read_packet_at(pkt_file_t *file, size_t index);
+pkt_array_t pkt_read_all_packets(pkt_file_t *file);
 
 #endif //PKT_LIBRARY_H
