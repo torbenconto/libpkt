@@ -14,7 +14,7 @@
 
 
 ## Magic Number
-- `.pkt` files use the magic number:  
+- `.pkt` files use the magic number: 
   **`0x504B5400`** (`PKT` in ASCII with a null terminator).
 
 ## Packet Type Numbers

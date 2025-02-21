@@ -74,6 +74,8 @@ int pkt_write_header(pkt_file_t *file, pkt_header_t *header) {
 pkt_header_t *pkt_read_header(pkt_file_t *file) {
     if (!file || !file->fp) return NULL;
 
+    fseek(file->fp, 0, SEEK_SET);
+
     pkt_header_t *header = pkt_header_create();
     if (!header) return NULL;
 
