@@ -48,7 +48,7 @@ void pkt_header_destroy(pkt_header_t *header) {
 
 
 pkt_t *pkt_create(uint32_t length) {
-    pkt_t *packet = (pkt_t *)malloc(sizeof(pkt_t) + length);
+    pkt_t *packet = (pkt_t *)malloc(sizeof(pkt_t) + (length > 0 ? length : 0));
     if (packet == NULL) {
         return NULL;
     }
@@ -56,7 +56,7 @@ pkt_t *pkt_create(uint32_t length) {
     // Initialize the packet fields
     packet->type = 0;
     packet->timestamp = 0;
-    packet->length = length;
+    packet->length = length;    
 
     return packet;
 }
@@ -65,12 +65,12 @@ void pkt_destroy(pkt_t *packet) {
     free(packet);
 }
 
-pkt_file_t *pkt_open(const char *filename, const char *mode) {
+pkt_file_t *pkt_open(const char *filename) {
     pkt_file_t *pkt = malloc(sizeof(pkt_file_t));
     if (!pkt) {
         return NULL;
     }
-    pkt->fp = fopen(filename, mode);
+    pkt->fp = fopen(filename, "w+b");
     if (!pkt->fp) {
         free(pkt);
         return NULL;
@@ -110,6 +110,10 @@ int pkt_write_header(pkt_file_t *file, pkt_header_t *header) {
         free(buf);
         return -1;
     }
+
+    fflush(file->fp);
+
+    fseek(file->fp, 0, SEEK_SET);
 
     free(buf);
 
@@ -182,6 +186,7 @@ int pkt_append_packet(pkt_file_t *file, pkt_t *packet) {
         converted_packet.length = swap32(packet->length);
     }
 
+
     // Copy the packet data into the buffer
     memcpy(buf, &converted_packet, sizeof(pkt_t));
     memcpy(buf + sizeof(pkt_t), packet->data, packet->length);
@@ -205,6 +210,10 @@ int pkt_append_packet(pkt_file_t *file, pkt_t *packet) {
         free(header);
         return -1;
     }
+
+
+    fflush(file->fp);
+    fseek(file->fp, 0, SEEK_SET);
 
     free(buf);
     free(header);
