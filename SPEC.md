@@ -11,6 +11,7 @@
 | 24        | 24       | 192     | **Packet Length (4 bytes)**  |                                |                         |                           |        |        |        |        |
 | 28        | 28       | 224     | **Packet Data (Variable)**   |                                |                         |                           |        |        |        |        |
 
+The file header only takes up 12 bytes and the heaader on each packet 16 bytes. This makes the files incredibly lightweight with no bloat.
 
 
 ## Magic Number
