@@ -1,14 +1,9 @@
-cmake_minimum_required(VERSION 3.10)
-project(libpkt_tests LANGUAGES C)
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(Check REQUIRED check)
 
-# Add the Check library
-find_package(Check REQUIRED)
+include_directories(${Check_INCLUDE_DIRS})
 
-# Add the test source files
-add_executable(test_libpkt test_libpkt.c)
+add_executable(test_runner test_libpkt.c)
+target_link_libraries(test_runner PRIVATE libpkt ${Check_LIBRARIES} pthread)
 
-# Link the test executable with the library and Check
-target_link_libraries(test_libpkt PRIVATE pkt Check::Check)
-
-# Add a test target
-add_test(NAME test_libpkt COMMAND test_libpkt)
+add_test(NAME LibPktTests COMMAND test_runner)

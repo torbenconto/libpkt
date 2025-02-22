@@ -88,6 +88,37 @@ To build the project, clone the repository and use CMake to generate the build f
     sudo make install
     ```
 
+### Cross-compiling the Project
+
+To cross-compile the project for different platforms, use the provided toolchain files.
+
+#### Cross-compiling for ARM
+
+```bash
+mkdir build-arm
+cd build-arm
+cmake -DCMAKE_TOOLCHAIN_FILE=../toolchains/arm.cmake ..
+make
+```
+
+#### Cross-compiling for macOS
+
+```bash
+mkdir build-mac
+cd build-mac
+cmake -DCMAKE_TOOLCHAIN_FILE=../toolchains/mac.cmake ..
+make
+```
+
+#### Cross-compiling for Linux
+
+```bash
+mkdir build-linux
+cd build-linux
+cmake -DCMAKE_TOOLCHAIN_FILE=../toolchains/linux.cmake ..
+make
+```
+
 ### Using the Library with CMake
 
 To use the PKT File Library in your own CMake project, you can use the `find_package` command:

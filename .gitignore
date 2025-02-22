@@ -4,6 +4,8 @@ CMakeFiles/
 Makefile
 *.a
 *.pkt
+cmake_install.cmake
+*file.cmake
 
 # Test files
 tests/CMakeFiles/
@@ -13,5 +15,3 @@ Testing
 test
 
 buildl.sh
-
-*.cmake
