@@ -1,5 +1,3 @@
-name: Build and Release
-
 on:
   push:
     tags:
@@ -34,19 +32,33 @@ jobs:
   package:
     runs-on: ubuntu-latest
     needs: build
+    permissions:
+      contents: write
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]  # Define platforms for packaging
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
         
       - name: Set up CMake
         uses: threeal/cmake-action@v2.1.0
-        
+
       - name: Generate package with CPack
         run: |
           mkdir -p build
           cd build
           cmake ..
           cmake --build .
+          # Set the CPack generator based on the platform
+          if [[ "$RUNNER_OS" == "Linux" ]]; then
+            export CPACK_GENERATOR="TGZ;ZIP;RPM;DEB;DNF"
+          elif [[ "$RUNNER_OS" == "macOS" ]]; then
+            export CPACK_GENERATOR="TGZ;ZIP"
+          elif [[ "$RUNNER_OS" == "Windows" ]]; then
+            export CPACK_GENERATOR="ZIP;NSIS"
+          fi
           cpack -C Release
 
       - name: Upload release package to GitHub
@@ -54,3 +66,4 @@ jobs:
         with:
           artifacts: build/package/*  # Path to your generated package
           tag: ${{ github.ref }}  # The version tag
+          name: Build and Release  # Name the release as 'Build and Release'
