@@ -49,10 +49,14 @@ jobs:
         sudo apt-get update
         sudo apt-get install -y check pkg-config
 
-    - name: Install dependencies (Windows only)
+    - name: Install MSYS2 and pkg-config (Windows only)
       if: matrix.os == 'windows-latest'
       run: |
-        choco install pkgconfig-lite
+        # Install MSYS2
+        choco install msys2
+        # Use MSYS2 to install pkg-config
+        C:/tools/msys2/usr/bin/pacman.exe -Syu --noconfirm
+        C:/tools/msys2/usr/bin/pacman.exe -S --noconfirm pkg-config
 
     - name: Configure CMake
       run: >
