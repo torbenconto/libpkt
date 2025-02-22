@@ -131,8 +131,7 @@ pkt_header_t *read_header = pkt_read_header(file);
 
 ```c
 int result = pkt_append_packet(file, packet);
-pkt_t *read_packet = pkt_read_packet(file);
-pkt_t *read_packet_at_index = pkt_read_packet_at(file, index);
+pkt_t *read_packet_at_index = pkt_read_packet(file, index);
 pkt_array_t all_packets = pkt_read_all_packets(file);
 ```
 
