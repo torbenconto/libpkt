@@ -49,13 +49,12 @@ project_dep = declare_dependency(
 )
 set_variable(meson.project_name() + '_dep', project_dep)
 
-install_headers(project_headers, subdir : meson.project_name())
+install_headers(project_headers)
 
 pkg_mod = import('pkgconfig')
 pkg_mod.generate(
   name : meson.project_name(),
   filebase : meson.project_name(),
   description : project_description,
-  subdirs : meson.project_name(),
   libraries : project_target,
 )
