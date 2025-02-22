@@ -15,7 +15,6 @@ typedef enum {
 typedef struct {
     uint32_t magic_number;
     uint8_t version;
-    uint8_t endian;
     uint16_t reserved;
     uint32_t length;
 } pkt_header_t;

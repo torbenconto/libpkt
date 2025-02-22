@@ -9,7 +9,6 @@ pkt_header_t *pkt_header_create() {
 
     header->magic_number = PKT_MAGIC_NUMBER;
     header->version = 1;
-    header->endian = 0;
     header->reserved = 0;
     header->length = 0;
 
@@ -95,7 +94,6 @@ pkt_header_t *pkt_read_header(pkt_file_t *file) {
 int pkt_append_packet(pkt_file_t *file, pkt_t *packet) {
     if (!file || !file->fp || !packet) return -1;
 
-
     pkt_header_t *header = pkt_read_header(file);
     if (!header) {
         fprintf(stderr, "Can't read header\n");
@@ -106,7 +104,7 @@ int pkt_append_packet(pkt_file_t *file, pkt_t *packet) {
 
     fseek(file->fp, 0, SEEK_SET);
 
-    if (pkt_write_header(file,header) != 0) {
+    if (pkt_write_header(file, header) != 0) {
         fprintf(stderr, "Can't write header\n");
         free(header);
         return -1;
@@ -210,7 +208,6 @@ pkt_t *pkt_read_packet_at(pkt_file_t *file, size_t index) {
     free(header);
     return packet_ptr;
 }
-
 
 pkt_array_t pkt_read_all_packets(pkt_file_t *file) {
     pkt_array_t result = {NULL, 0};

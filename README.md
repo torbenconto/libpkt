@@ -11,8 +11,7 @@ The `.pkt` file format consists of a file header followed by multiple packet ent
 |------------|--------------------|------------|
 | 0          | Magic Number       | 4 bytes    |
 | 4          | Version            | 1 byte     |
-| 5          | Endian             | 1 byte     |
-| 6          | Reserved           | 2 bytes    |
+| 5          | Reserved           | 2 bytes    |
 | 8          | Packet Count       | 4 bytes    |
 
 ### Packet Entry

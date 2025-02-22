@@ -1,8 +1,17 @@
-*.cmake
-test
-*.sh
+# Ignore build files and output
 CMakeCache.txt
-CMakeFiles
+CMakeFiles/
+Makefile
 *.a
 *.pkt
-Makefile
+
+# Test files
+tests/CMakeFiles/
+tests/CMakeCache.txt
+tests/test_runner
+Testing
+test
+
+buildl.sh
+
+*.cmake
