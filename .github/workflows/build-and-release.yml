@@ -62,4 +62,4 @@ jobs:
           artifacts: build/package/*  # Path to all generated packages
           tag: ${{ github.ref }}  # The version tag
           name: Build and Release  # Name the release as 'Build and Release'
-          update: true  # Set this to true to update the existing release if it exists
+          allowUpdates: true  # Allow updates to the release if it already exists
