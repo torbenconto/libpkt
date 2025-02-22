@@ -82,11 +82,20 @@ To build the project, clone the repository and use CMake to generate the build f
     make
     ```
 
-4. Install the library (optional):
+4. Install the library:
 
     ```bash
     sudo make install
     ```
+
+### Using the Library with CMake
+
+To use the PKT File Library in your own CMake project, you can use the `find_package` command:
+
+```cmake
+find_package(pkt REQUIRED)
+target_link_libraries(your_target PRIVATE pkt)
+```
 
 ## Usage
 
