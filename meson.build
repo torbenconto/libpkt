@@ -56,5 +56,7 @@ pkg_mod.generate(
   name : meson.project_name(),
   filebase : meson.project_name(),
   description : project_description,
-  libraries : project_target,
+  libraries : [project_target, '-llibpkt'],
+  requires : '',
+  version : meson.project_version(),
 )

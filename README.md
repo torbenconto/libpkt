@@ -54,12 +54,13 @@ Each packet entry contains information about an individual packet:
 ### Prerequisites
 
 - A C compiler (e.g., GCC or Clang).
-- CMake (for building the project).
+- Meson (for building the project).
+- Ninja (for building the project).
 - A POSIX-compliant operating system (Linux, macOS, or Windows with Cygwin/MSYS2).
 
 ### Building the Project
 
-To build the project, clone the repository and use CMake to generate the build files.
+To build the project, clone the repository and use Meson to configure and build the project.
 
 1. Clone the repository:
 
@@ -72,60 +73,47 @@ To build the project, clone the repository and use CMake to generate the build f
 
     ```bash
     mkdir build
+    meson build
     cd build
-    cmake ..
     ```
 
 3. Build the project:
 
     ```bash
-    make
+    meson compile
     ```
 
 4. Install the library:
 
     ```bash
-    sudo make install
+    sudo meson install
     ```
 
-### Cross-compiling the Project
-
-To cross-compile the project for different platforms, use the provided toolchain files.
-
-#### Cross-compiling for ARM
-
-```bash
-mkdir build-arm
-cd build-arm
-cmake -DCMAKE_TOOLCHAIN_FILE=../toolchains/arm.cmake ..
-make
-```
-
-#### Cross-compiling for macOS
-
-```bash
-mkdir build-mac
-cd build-mac
-cmake -DCMAKE_TOOLCHAIN_FILE=../toolchains/mac.cmake ..
-make
-```
-
-#### Cross-compiling for Linux
-
-```bash
-mkdir build-linux
-cd build-linux
-cmake -DCMAKE_TOOLCHAIN_FILE=../toolchains/linux.cmake ..
-make
-```
 
 ### Using the Library with CMake
 
-To use the PKT File Library in your own CMake project, you can use the `find_package` command:
+To use the PKT File Library in your own CMake project, you can use pkg-config to find the library and link it to your target:
 
 ```cmake
-find_package(pkt REQUIRED)
-target_link_libraries(your_target PRIVATE pkt)
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(LIBPKT REQUIRED libpkt)
+
+add_executable(my_program main.c)
+
+# Properly include directories and link libraries
+target_include_directories(my_program PRIVATE ${LIBPKT_INCLUDE_DIRS})
+target_link_libraries(my_program PRIVATE ${LIBPKT_LIBRARIES})
+target_compile_options(my_program PRIVATE ${LIBPKT_CFLAGS_OTHER})
+```
+
+### Using the Library with Meson
+
+To use the PKT File Library in your own Meson project, you can use the `dependency()` function to find the library and link it to your target:
+
+```meson
+libpkt_dep = dependency('libpkt')
+
+executable('my_program', 'main.c', dependencies:[libpkt_dep])
 ```
 
 ## Usage
@@ -133,7 +121,7 @@ target_link_libraries(your_target PRIVATE pkt)
 To use the PKT File Library, include the header file in your project:
 
 ```c
-#include "libpkt.h"
+#include <lipkt.h>
 ```
 
 ### Create and Destroy Headers
