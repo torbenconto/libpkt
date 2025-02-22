@@ -160,41 +160,56 @@ pkt_t *pkt_read_packet_at(pkt_file_t *file, size_t index) {
     if (!header) return NULL;
     
     if (index >= header->length) {
+        free(header);
         return NULL;
     }
 
     long offset = sizeof(pkt_header_t);
+    fseek(file->fp, offset, SEEK_SET);
 
     for (size_t i = 0; i < index; i++) {
         pkt_t packet;
         if (fread(&packet, sizeof(pkt_t), 1, file->fp) != 1) {
+            free(header);
             return NULL;
         }
         offset += sizeof(pkt_t) + packet.length;
+        if (fseek(file->fp, packet.length, SEEK_CUR) != 0) {
+            free(header);
+            return NULL;
+        }
     }
 
     if (fseek(file->fp, offset, SEEK_SET) != 0) {
+        free(header);
         return NULL;
     }
     
     pkt_t packet;
-    if (fread(&packet, sizeof(pkt_t), 1, file->fp) != 1) return NULL;
+    if (fread(&packet, sizeof(pkt_t), 1, file->fp) != 1) {
+        free(header);
+        return NULL;
+    }
 
     pkt_t *packet_ptr = pkt_create(packet.length);
-    if (!packet_ptr) return NULL;
+    if (!packet_ptr) {
+        free(header);
+        return NULL;
+    }
 
     *packet_ptr = packet;
 
     if (packet_ptr->length > 0) {
         if (fread(packet_ptr->data, 1, packet_ptr->length, file->fp) != packet_ptr->length) {
             free(packet_ptr);
+            free(header);
             return NULL;
         }
     }
 
+    free(header);
     return packet_ptr;
 }
-
 
 
 pkt_array_t pkt_read_all_packets(pkt_file_t *file) {
