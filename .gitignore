@@ -1,11 +1,5 @@
 # Ignore build files and output
-CMakeCache.txt
-CMakeFiles/
-Makefile
-*.a
-*.pkt
-cmake_install.cmake
-*file.cmake
+build
 
 # Test files
 tests/CMakeFiles/
