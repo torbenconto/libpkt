@@ -45,25 +45,19 @@ jobs:
       - name: Set up CMake
         uses: threeal/cmake-action@v2.1.0
 
-      - name: Generate package with CPack
+      - name: Generate packages for multiple formats
         run: |
           mkdir -p build
           cd build
           cmake ..
           cmake --build .
-          # Set the CPack generator based on the platform
-          if [[ "$RUNNER_OS" == "Linux" ]]; then
-            export CPACK_GENERATOR="TGZ;ZIP;RPM;DEB;DNF"
-          elif [[ "$RUNNER_OS" == "macOS" ]]; then
-            export CPACK_GENERATOR="TGZ;ZIP"
-          elif [[ "$RUNNER_OS" == "Windows" ]]; then
-            export CPACK_GENERATOR="ZIP;NSIS"
-          fi
+          # Set the CPack generator to include all desired formats for all platforms
+          export CPACK_GENERATOR="TGZ;ZIP;RPM;DEB;DNF;NSIS"
           cpack -C Release
 
-      - name: Upload release package to GitHub
+      - name: Upload release packages to GitHub
         uses: ncipollo/release-action@v1.15.0
         with:
-          artifacts: build/package/*  # Path to your generated package
+          artifacts: build/package/*  # Path to all generated packages
           tag: ${{ github.ref }}  # The version tag
           name: Build and Release  # Name the release as 'Build and Release'
