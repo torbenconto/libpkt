@@ -43,11 +43,16 @@ jobs:
       run: |
         echo "build-output-dir=${{ github.workspace }}/build" >> "$GITHUB_OUTPUT"
 
-    - name: Install Check library and pkg-config (Ubuntu only)
+    - name: Install dependencies (Ubuntu only)
       if: matrix.os == 'ubuntu-latest'
       run: |
         sudo apt-get update
         sudo apt-get install -y check pkg-config
+
+    - name: Install dependencies (Windows only)
+      if: matrix.os == 'windows-latest'
+      run: |
+        choco install pkgconfig-lite
 
     - name: Configure CMake
       run: >
