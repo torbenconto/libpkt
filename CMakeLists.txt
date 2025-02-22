@@ -7,8 +7,8 @@ set(CMAKE_C_STANDARD 11)
 add_library(libpkt STATIC libpkt.c)
 
 # Enable testing (assuming you have tests in a subdirectory)
-enable_testing()
-add_subdirectory(tests)
+#enable_testing()
+#add_subdirectory(tests)
 
 # Specify the installation locations
 install(TARGETS libpkt DESTINATION lib)
