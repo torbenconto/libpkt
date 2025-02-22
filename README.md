@@ -124,6 +124,23 @@ To use the PKT File Library, include the header file in your project:
 #include <lipkt.h>
 ```
 
+## liblibpkt.so not found at runtime.
+This is a common issue when the library is not installed in a standard location. To fix this, you can set the `LD_LIBRARY_PATH` environment variable to include the directory where the library is installed:
+
+```bash
+export LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH
+```
+
+Alternatively, you can copy the library to a standard location like `/usr/lib` or `/usr/local/lib`.
+
+You can also use ldconfig to update the library cache:
+
+```bash
+echo "/usr/local/lib/x86_64-linux-gnu" | sudo tee /etc/ld.so.conf.d/libpkt.conf
+sudo ldconfig
+```
+
+
 ### Create and Destroy Headers
 
 ```c
