@@ -50,7 +50,7 @@ jobs:
           cpack -C Release
 
       - name: Upload release package to GitHub
-        uses: ncipollo/release-action@v1
+        uses: ncipollo/release-action@v1.15.0
         with:
           artifacts: build/package/*  # Path to your generated package
           tag: ${{ github.ref }}  # The version tag
