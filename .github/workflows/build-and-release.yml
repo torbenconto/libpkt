@@ -39,7 +39,7 @@ jobs:
         uses: actions/checkout@v3
         
       - name: Set up CMake
-        uses: actions/setup-cmake@v3  # Updated action
+        uses: threeal/cmake-action@v2.1.0
         
       - name: Generate package with CPack
         run: |
