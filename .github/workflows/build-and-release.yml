@@ -43,7 +43,7 @@ jobs:
         
       - name: Generate package with CPack
         run: |
-          mkdir build
+          mkdir -p build
           cd build
           cmake ..
           cmake --build .
