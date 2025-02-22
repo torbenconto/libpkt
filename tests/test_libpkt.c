@@ -61,7 +61,7 @@ START_TEST(test_pkt_append_read_packet) {
     pkt_t *packet = pkt_create(length);
     pkt_append_packet(file, packet);
 
-    pkt_t *read_packet = pkt_read_packet(file);
+    pkt_t *read_packet = pkt_read_packet(file, 0);
     ck_assert_ptr_nonnull(read_packet);
     ck_assert_uint_eq(read_packet->type, 0);
     ck_assert_int_eq(read_packet->timestamp, 0);

@@ -127,31 +127,8 @@ int pkt_append_packet(pkt_file_t *file, pkt_t *packet) {
     return 0;
 }
 
-pkt_t *pkt_read_packet(pkt_file_t *file) {
-    if (!file || !file->fp) return NULL;
-
-    // skip header
-    fseek(file->fp, sizeof(pkt_header_t), SEEK_SET);
-
-    pkt_t packet;
-    if (fread(&packet, sizeof(pkt_t), 1, file->fp) != 1) return NULL;
-
-    pkt_t *packet_ptr = pkt_create(packet.length);
-    if (!packet_ptr) return NULL;
-
-    *packet_ptr = packet;
-
-    if (packet_ptr->length > 0) {
-        if (fread(packet_ptr->data, 1, packet_ptr->length, file->fp) != packet_ptr->length) {
-            free(packet_ptr);
-            return NULL;
-        }
-    }
-
-    return packet_ptr;
-}
-
-pkt_t *pkt_read_packet_at(pkt_file_t *file, size_t index) {
+// expects a 0-based index of the packet to read
+pkt_t *pkt_read_packet(pkt_file_t *file, size_t index) {
     if (!file || !file->fp) return NULL;
 
     pkt_header_t *header = pkt_read_header(file);
