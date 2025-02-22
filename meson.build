@@ -27,11 +27,11 @@ build_args += [
   '-DPROJECT_VERSION=' + meson.project_version(),
 ]
 
-if target_machine.system() == 'windows' or target_machine.system() == 'cygwin'
-  build_args += '-DMYLIB_PUBLIC="__declspec(dllexport)"'
-else
-  build_args += '-DMYLIB_PUBLIC=__attribute__((visibility("default")))'
-endif
+# if target_machine.system() == 'windows' or target_machine.system() == 'cygwin'
+#   build_args += '-DLIBPKT_PUBLIC="__declspec(dllexport)"'
+# else
+#   build_args += '-DLIBPKT_PUBLIC=__attribute__((visibility("default")))'
+# endif
 
 
 project_target = shared_library(
@@ -39,7 +39,7 @@ project_target = shared_library(
   project_source_files,
   install : true,
   c_args : build_args,
-  gnu_symbol_visibility : 'hidden',
+  gnu_symbol_visibility : 'default',
   include_directories : public_headers,
 )
 
