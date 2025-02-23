@@ -13,9 +13,9 @@ project_source_files = [
     'src/libpkt.c'
 ]
 
-# project_test_files = [
-#     'tests/test_libpkt.c'
-# ]
+project_test_files = [
+    'tests/test_libpkt.c'
+]
 
 build_args = [
 ]
@@ -33,7 +33,6 @@ build_args += [
 #   build_args += '-DLIBPKT_PUBLIC=__attribute__((visibility("default")))'
 # endif
 
-
 project_target = shared_library(
   meson.project_name(),
   project_source_files,
@@ -47,6 +46,21 @@ project_dep = declare_dependency(
   include_directories: public_headers,
   link_with : project_target
 )
+
+test_executable = executable(
+  'test_libpkt',
+  project_test_files,
+  dependencies: project_dep,
+  include_directories: public_headers,
+  c_args: build_args
+)
+
+test(
+  'test_libpkt',
+  test_executable,
+)
+
+
 set_variable(meson.project_name() + '_dep', project_dep)
 
 install_headers(project_headers)
