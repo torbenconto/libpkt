@@ -1,5 +1,5 @@
 project(
-  'libpkt',
+  'pkt',
   'c',
   version : '1.0.0',
 )
@@ -70,7 +70,7 @@ pkg_mod.generate(
   name : meson.project_name(),
   filebase : meson.project_name(),
   description : project_description,
-  libraries : [project_target, '-llibpkt'],
+  libraries : [project_target, '-lpkt'],
   requires : '',
   version : meson.project_version(),
 )
