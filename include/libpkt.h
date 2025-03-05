@@ -12,7 +12,7 @@ typedef enum {
     PKT_TYPE_ARP = 0x01
 } pkt_type_t;
 
-typedef struct {
+typedef struct  __attribute__((packed)) {
     uint32_t magic_number;
     uint8_t version;
     uint16_t reserved;
