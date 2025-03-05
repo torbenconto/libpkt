@@ -1,5 +1,5 @@
 project(
-  'pkt',
+  'libpkt',
   'c',
   version : '1.0.0',
 )
@@ -40,6 +40,7 @@ project_target = shared_library(
   c_args : build_args,
   gnu_symbol_visibility : 'default',
   include_directories : public_headers,
+  name_prefix : '',
 )
 
 project_dep = declare_dependency(
