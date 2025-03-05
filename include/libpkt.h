@@ -12,6 +12,7 @@ typedef enum {
     PKT_TYPE_ARP = 0x01
 } pkt_type_t;
 
+// This must be packed to 11 bytes to ensure correct header size, without this it will be 12 bytes.
 typedef struct  __attribute__((packed)) {
     uint32_t magic_number;
     uint8_t version;
